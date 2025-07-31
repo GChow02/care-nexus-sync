@@ -53,48 +53,77 @@ const Index = () => {
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const user = mockUsers.find(u => u.email === email);
-      
-      if (user) {
-        setCurrentUser(user);
+    try {
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setCurrentUser(data.user);
         toast({
           title: "Welcome back!",
-          description: `Successfully logged in as ${user.fullName}`,
+          description: `Successfully logged in as ${data.user.fullName}`,
         });
       } else {
         toast({
           title: "Login Failed",
-          description: "Invalid email or password. Try john@example.com or doctor@example.com",
+          description: data.message || "Invalid credentials",
           variant: "destructive",
         });
       }
+    } catch (error) {
+      toast({
+        title: "Connection Error",
+        description: "Could not connect to server. Make sure backend is running on port 5000.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleRegister = async (data: RegisterData) => {
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const newUser: User = {
-        _id: Date.now().toString(),
-        fullName: data.fullName,
-        email: data.email,
-        doctorName: data.doctorName,
-        userType: data.userType,
-        status: "active"
-      };
-      
-      setCurrentUser(newUser);
-      toast({
-        title: "Account Created",
-        description: `Welcome to VitalSync, ${newUser.fullName}!`,
+    try {
+      const response = await fetch('http://localhost:5000/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
       });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setCurrentUser(result.user);
+        toast({
+          title: "Account Created",
+          description: `Welcome to VitalSync, ${result.user.fullName}!`,
+        });
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: result.message || "Could not create account",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Connection Error",
+        description: "Could not connect to server. Make sure backend is running on port 5000.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleLogout = () => {
